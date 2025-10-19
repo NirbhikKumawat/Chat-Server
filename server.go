@@ -1,13 +1,23 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 )
 
 func handleConnection(conn net.Conn) {
+	defer conn.Close()
 	fmt.Println("client connected:", conn.RemoteAddr())
-	conn.Close()
+	reader := bufio.NewReader(conn)
+	for {
+		msg, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("client disconnected:", conn.RemoteAddr())
+			return
+		}
+		fmt.Printf("[%s] %s", conn.RemoteAddr(), msg)
+	}
 }
 
 func main() {
