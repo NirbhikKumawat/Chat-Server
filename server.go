@@ -4,19 +4,44 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"sync"
 )
+
+var (
+	clients = make(map[net.Conn]bool)
+	mutex   sync.Mutex
+)
+
+func broadcast(sender net.Conn, msg string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	for client := range clients {
+		if client != sender {
+			client.Write([]byte(msg))
+		}
+	}
+}
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
+
+	mutex.Lock()
+	clients[conn] = true
+	mutex.Unlock()
 	fmt.Println("client connected:", conn.RemoteAddr())
 	reader := bufio.NewReader(conn)
 	for {
 		msg, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("client disconnected:", conn.RemoteAddr())
+			mutex.Lock()
+			delete(clients, conn)
+			mutex.Unlock()
 			return
 		}
 		fmt.Printf("[%s] %s", conn.RemoteAddr(), msg)
+		fmt.Println()
+		broadcast(conn, msg)
 	}
 }
 
