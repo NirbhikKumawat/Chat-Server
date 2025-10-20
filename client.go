@@ -5,6 +5,14 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
+	"time"
+)
+
+var (
+	cyan  = "\033[36m"
+	green = "\033[32m"
+	reset = "\033[0m"
 )
 
 func main() {
@@ -14,11 +22,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	fmt.Println("Connected to the chat server!")
+	fmt.Println(cyan + "Connected to the chat server!" + reset)
 	fmt.Print("Enter your name: ")
 
 	reader := bufio.NewReader(os.Stdin)
 	name, _ := reader.ReadString('\n')
+	name = strings.Replace(name, "\n", "", -1)
 	fmt.Fprintf(conn, "%s joined the chat\n", name)
 
 	go func() {
@@ -30,6 +39,9 @@ func main() {
 
 	for {
 		text, _ := reader.ReadString('\n')
-		fmt.Fprintf(conn, "%s: %s", name[:len(name)-1], text)
+		text = strings.TrimSpace(text)
+		timestamp := time.Now().Format("15:04:05")
+		msg := fmt.Sprintf("%s[%s][%s]: %s%s\n", green, timestamp, name, text, reset)
+		fmt.Fprintf(conn, msg)
 	}
 }
