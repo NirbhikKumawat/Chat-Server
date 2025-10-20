@@ -40,7 +40,6 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 		fmt.Printf("[%s] %s", conn.RemoteAddr(), msg)
-		fmt.Println()
 		broadcast(conn, msg)
 	}
 }
